@@ -1,0 +1,20 @@
+{
+  "name": "threegen",
+  "version": "0.0.1",
+  "description": "A three.js small random world generator and viewer",
+  "main": "index.html",
+  "scripts": {
+    "webpack": "webpack",
+    "dev": "webpack-dev-server --open",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dave Ernsting",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/three": "^0.92.17",
+    "three": "^0.95.0",
+    "webpack": "^4.16.5",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.5"
+  }
+}
