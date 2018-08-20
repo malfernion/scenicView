@@ -1,5 +1,5 @@
 {
-  "name": "threegen",
+  "name": "scenicView",
   "version": "0.0.1",
   "description": "A three.js small random world generator and viewer",
   "main": "index.html",
