@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/index.ts',
@@ -6,8 +7,20 @@ module.exports = {
     index: './index.html'
   },
   watch: true,
+  resolve: {
+    alias: {
+      'three/OrbitControls': path.join(__dirname, 'node_modules/three/examples/js/controls/OrbitControls.js'),
+      'three/OBJLoader': path.join(__dirname, 'node_modules/three/examples/js/loaders/OBJLoader.js')
+    }
+  },
+  plugins:[
+    new webpack.ProvidePlugin({
+      'THREE': 'three'
+    })
+  ],
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    publicPath: './src/textures/'
   }
 };
