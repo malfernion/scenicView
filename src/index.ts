@@ -3,7 +3,8 @@ import 'three/examples/js/controls/OrbitControls';
 import TerrainGenerator from './services/TerrainGenerator'
 
 let scene, camera, renderer, controls
-let terrainGenerator = new TerrainGenerator(20, 10, 65, 65)
+const size = 129
+let terrainGenerator = new TerrainGenerator(20, 10, size, size)
 
 // initialise main objects
 function init() {
@@ -20,6 +21,8 @@ function init() {
 	// Create the renderer and add to the page
 	renderer = new THREE.WebGLRenderer()
 	renderer.setSize(window.innerWidth, window.innerHeight)
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMapSoft = true;
 
 	// Attach the renderer to the document
 	document.body.appendChild(renderer.domElement)
@@ -34,34 +37,40 @@ function init() {
 }
 
 function addLights() {
-	const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+	const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
 	scene.add(ambientLight)
 	
-	const pointLight = new THREE.PointLight(0xffffff, 1.2, 200)
-	pointLight.position.set(70, 45, 50)
-	pointLight.castShadow = true
+	const pointLight = new THREE.PointLight('white', 0.7, 0)
+	pointLight.position.set(150, 150, 700)
 	pointLight.shadow.camera.near = 0.1
-	pointLight.shadow.camera.far = 200
+	pointLight.shadow.camera.far = 1000
+    pointLight.shadow.mapSize.width = 1024
+	pointLight.shadow.mapSize.height = 1024
+	pointLight.castShadow = true
+
 	scene.add(pointLight)
 }
 
 init()
 addLights()
 
-const mudMaterial = new THREE.MeshLambertMaterial({
-	map: THREE.ImageUtils.loadTexture('/src/textures/mud_32px.png')
-})
+// const mudMaterial = new THREE.MeshLambertMaterial({
+// 	map: THREE.ImageUtils.loadTexture('/src/textures/mud_32px.png')
+// })
 
-const grassMaterial = new THREE.MeshLambertMaterial({
-	map: THREE.ImageUtils.loadTexture('/src/textures/grass_32px.png')
-})
+// const grassMaterial = new THREE.MeshLambertMaterial({
+// 	map: THREE.ImageUtils.loadTexture('/src/textures/grass_32px.png')
+// })
 
-const materials = [ mudMaterial, mudMaterial, mudMaterial, mudMaterial, grassMaterial, mudMaterial ]
+// const materials = [ mudMaterial, mudMaterial, mudMaterial, mudMaterial, grassMaterial, mudMaterial ]
 
 // create a cube with a shitty material
 var addCube = function(posX, posY, height) {
-	var geometry = new THREE.BoxGeometry(1, 1, height)
-	var cubeMesh = new THREE.Mesh(geometry, materials)
+	const geometry = new THREE.CubeGeometry(1, 1, height)
+	const material = new THREE.MeshLambertMaterial({
+        color: 0x0aeedf
+    })
+	const cubeMesh = new THREE.Mesh(geometry, material)
 	cubeMesh.position.set(posX, posY, 0 + height / 2)
 	cubeMesh.receiveShadow = true
 	cubeMesh.castShadow = true
@@ -74,11 +83,23 @@ function animate() {
 	renderer.render(scene, camera)
 }
 
+// Add a plane for now at 0 with the color of either
+// #005F50
+// or
+// #005546
+const geometry = new THREE.PlaneGeometry( size, size, 32 );
+const material = new THREE.MeshBasicMaterial( {color: 0x005F50, side: THREE.DoubleSide} );
+const plane = new THREE.Mesh( geometry, material );
+plane.position.set(0, 0, 0)
+scene.add( plane );
+
 terrainGenerator.generate()
 	.then(terrain => {
 		for (let innerArray of terrain) {
 			for (let terrainObject of innerArray) {
-				addCube(terrainObject.posX, terrainObject.posY, terrainObject.height)
+				if(terrainObject.height > 0) {
+					addCube(terrainObject.posX, terrainObject.posY, terrainObject.height)
+				}
 			}
 		}
 		animate()

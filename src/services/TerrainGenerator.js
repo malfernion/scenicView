@@ -57,61 +57,82 @@ export default class TerrainGenerator {
 
   generateFractalDiamondSquareTerrain () {
     return new Promise((resolve, reject) => {
-      const initialHeight = 16
-      const randomHeightModifier = 2.0
   
-      // Recursive method for filling the seeded terrain with values
-      function diamondSquareStep (terrain, randomHeightModifier, x0, y0, size) {
-        return new Promise((resolve, reject) => {
-          // Check the exit conditions
-          if(size == 1) {
-            resolve()
+      // Method for filling the seeded terrain with values
+      function diamondSquareStep (size, maxVal, heightModifier) {
+        const halfSize = size / 2
+
+        // Loop over all squares for this size and define the centre point
+        for (let x = halfSize; x < maxVal; x += size) {
+          for (let y = halfSize; y < maxVal; y += size) {
+            evaluateSquare(x, y, size, getRandomHeight(heightModifier))
           }
-  
-          // Determine the coordinates of the centre
-          const centreX = x0 + (size / 2)
-          const centreY = y0 + (size / 2)
-  
-          // Get the height values of the corners
-          const bottomLeftHeight = terrain[x0][y0].height
-          const bottomRightHeight = terrain[x0 + size][y0].height
-          const topLeftHeight = terrain[x0][y0 + size].height
-          const topRightHeight = terrain[x0 + size][y0 + size].height
-  
-          // Use the corner heights to set the height of the centre
-          const centreHeight = getRandomHeight((bottomLeftHeight + bottomRightHeight + topLeftHeight + topRightHeight) / 4, randomHeightModifier)
-          terrain[centreX][centreY].height = centreHeight
-  
-          // Use the corner and centre heights to set the mid point values of the edges
-          const middleBottomHeight = getRandomHeight((centreHeight + bottomLeftHeight + bottomRightHeight) / 3, randomHeightModifier)
-          const middleLeftHeight = getRandomHeight((centreHeight + bottomLeftHeight + topLeftHeight) / 3, randomHeightModifier)
-          const middleTopHeight = getRandomHeight((centreHeight + topLeftHeight + topRightHeight) / 3, randomHeightModifier)
-          const middleRightHeight = getRandomHeight((centreHeight + topRightHeight + bottomRightHeight) / 3, randomHeightModifier)
-  
-          terrain[centreX][y0].height = middleBottomHeight
-          terrain[x0][centreY].height = middleLeftHeight
-          terrain[centreX][y0 + size].height = middleTopHeight
-          terrain[x0 + size][centreY].height = middleRightHeight
-  
-          // Perform the steps on the next squares (bottom left, bottom right, top left, top right)
-          const innerRandomHeightModifier = randomHeightModifier / 2
-          const innerSize = size / 2
-  
-          Promise.all([
-            diamondSquareStep(terrain, innerRandomHeightModifier, x0, y0, innerSize),
-            diamondSquareStep(terrain, innerRandomHeightModifier, centreX, y0, innerSize),
-            diamondSquareStep(terrain, innerRandomHeightModifier, x0, centreY, innerSize),
-            diamondSquareStep(terrain, innerRandomHeightModifier, centreX, centreY, innerSize)
-          ]).then(() => {
-            resolve()
-          })
-        })
+        }
+
+        // Loop over all diamonds for this size and define the centre point
+        for (let x = 0; x < maxVal; x += size) {
+          for (let y = 0; y < maxVal; y += size) {
+            if(heightExists(x + halfSize, y)) {
+              evaluateDiamond(x + halfSize, y, size, getRandomHeight(heightModifier))
+            }
+            if(heightExists(x + halfSize, y + size)) {
+              evaluateDiamond(x + halfSize, y + size, size, getRandomHeight(heightModifier))
+            }
+            if(heightExists(x, y + halfSize)) {
+              evaluateDiamond(x, y + halfSize, size, getRandomHeight(heightModifier))
+            }
+            if(heightExists(x + size, y + halfSize)) {
+              evaluateDiamond(x + size, y + halfSize, size, getRandomHeight(heightModifier))
+            }
+          }
+        }
       }
-  
-      // Helper function to generate a height with a random deviationß
-      function getRandomHeight(baseHeight, randomHeightModifier) {
-        const deviation = (Math.random() * baseHeight * randomHeightModifier) - (0.5 * baseHeight * randomHeightModifier)
-        return baseHeight + deviation
+
+      // Takes the x and y coordinates of the centre of a square and uses the corners to define the value
+      function evaluateSquare(x, y, size, randomHeight) {
+        const bottomLeftHeight = terrain[x - size / 2][y - size / 2].height
+        const bottomRightHeight = terrain[x + size / 2][y - size / 2].height
+        const topLeftHeight = terrain[x - size / 2][y + size / 2].height
+        const topRightHeight = terrain[x + size / 2][y + size / 2].height
+
+        terrain[x][y].height = ((bottomLeftHeight + bottomRightHeight + topLeftHeight + topRightHeight) / 4) + randomHeight
+      }
+
+      // Takes the x and y coordinates of the centre of a diamond and uses the corners to define the value
+      function evaluateDiamond(x, y, size, randomHeight) {
+        const contributingHeights = []
+
+        // Add the left point's height
+        if(heightExists(x - size / 2, y)) {
+          contributingHeights.push(terrain[x - size / 2][y].height)
+        }
+
+        // Add the bottom point's height
+        if(heightExists(x, y - size / 2)) {
+          contributingHeights.push(terrain[x][y - size / 2].height)
+        }
+
+        // Add the right point's height
+        if(heightExists(x + size / 2, y)) {
+          contributingHeights.push(terrain[x + size / 2][y].height)
+        }
+        
+        // Add the top point's height
+        if(heightExists(x, y + size / 2)) {
+          contributingHeights.push(terrain[x][y + size / 2].height)
+        }
+        
+        let sum = 0
+        contributingHeights.forEach(height => sum += height)
+        terrain[x][y].height = (sum / contributingHeights.length) + randomHeight
+      }
+
+      function heightExists(x, y) {
+        return terrain[x] && terrain[x][y]
+      }
+
+      function getRandomHeight(randomHeightModifer) {
+        return (Math.random() * randomHeightModifer) - (randomHeightModifer / 2)
       }
   
       // Generate array
@@ -129,14 +150,25 @@ export default class TerrainGenerator {
       }
   
       // Seed corner values with a randomly modified height
-      terrain[0][0].height = getRandomHeight(initialHeight, randomHeightModifier)
-      terrain[this.xSize - 1][0].height = getRandomHeight(initialHeight, randomHeightModifier)
-      terrain[0][this.ySize - 1].height = getRandomHeight(initialHeight, randomHeightModifier)
-      terrain[this.xSize - 1][this.ySize - 1].height = getRandomHeight(initialHeight, randomHeightModifier)
-  
-      // Start algorithm
-      diamondSquareStep(terrain, randomHeightModifier / 2, 0, 0, this.xSize - 1)
-        .then(() => {resolve(terrain)})
+      const initialHeight = 10
+      const randomHeightModifier = 30
+
+      terrain[0][0].height = initialHeight + getRandomHeight(randomHeightModifier)
+      terrain[this.xSize - 1][0].height = initialHeight + getRandomHeight(randomHeightModifier)
+      terrain[0][this.ySize - 1].height = initialHeight + getRandomHeight(randomHeightModifier)
+      terrain[this.xSize - 1][this.ySize - 1].height = initialHeight + getRandomHeight(randomHeightModifier)
+
+      let squareSize = this.xSize - 1
+      let heightModifier = randomHeightModifier
+
+      while (squareSize > 1) {
+        console.log('running a step of size: ' + squareSize)
+        diamondSquareStep(squareSize, this.xSize - 1, heightModifier)
+        squareSize = squareSize / 2
+        heightModifier = heightModifier / 2
+      }
+      
+      resolve(terrain)
     })
   }
 
@@ -148,8 +180,6 @@ export default class TerrainGenerator {
   }
 
   generate () {
-    let baseTerrain
-    
     return this.generateBaseTerrain().then(generatedBaseTerrain => generatedBaseTerrain)
   }
 }
