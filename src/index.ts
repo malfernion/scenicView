@@ -3,8 +3,8 @@ import 'three/examples/js/controls/OrbitControls';
 import TerrainGenerator from './services/TerrainGenerator'
 
 let scene, camera, renderer, controls
-const size = 129
-let terrainGenerator = new TerrainGenerator(20, 10, size, size)
+const size = 65
+let terrainGenerator = new TerrainGenerator(size)
 
 // initialise main objects
 function init() {
@@ -83,10 +83,7 @@ function animate() {
 	renderer.render(scene, camera)
 }
 
-// Add a plane for now at 0 with the color of either
-// #005F50
-// or
-// #005546
+// Add a plane as stylised water
 const geometry = new THREE.PlaneGeometry( size, size, 32 );
 const material = new THREE.MeshBasicMaterial( {color: 0x005F50, side: THREE.DoubleSide} );
 const plane = new THREE.Mesh( geometry, material );

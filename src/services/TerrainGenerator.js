@@ -1,58 +1,57 @@
 export default class TerrainGenerator {
 
-  constructor(baseHeight, maxHeightDelta, xSize, ySize) {
-    this.baseHeight = baseHeight
-    this.maxHeightDelta = maxHeightDelta
-    this.xSize = xSize
-    this.ySize = ySize
+  constructor(size) {
+    this.size = size
   }
 
-  generateTrigTerrain (numFuncs) {
-    this.characteristicSize = Math.sqrt(this.xSize * this.xSize + this.ySize * this.ySize)
-    console.log('generating functions')
-    const terrainFunctions = []
+  generateTrigTerrain () {
+    return new Promise((resolve, reject) => {
+      const numFuncs = 4
+      const baseHeight = 20
+      this.characteristicSize = this.size
+      console.log('generating functions')
+      const terrainFunctions = []
 
-    const heightDeltas = [10, 6, 1.2, 0.4]
-    const lambdas = [0.05, 0.1, 0.4, 1.2]
+      const heightDeltas = [10, 6, 1.2, 0.4]
+      const lambdas = [0.05, 0.1, 0.4, 1.2]
 
-    for (let i = 0; i < numFuncs; i++) {
-      // const maxAmp = Math.random() * this.maxHeightDelta
-      // const waveLength = (Math.random() * this.characteristicSize) * 0.05
-      const maxAmp = Math.random() * heightDeltas[i]
-      const waveLength = (Math.random() * this.characteristicSize) * lambdas[i]
-      const posX = (Math.random() * (this.xSize + 40)) - 20
-      const posY = (Math.random() * (this.ySize + 40)) - 20
+      for (let i = 0; i < numFuncs; i++) {
+        const maxAmp = Math.random() * heightDeltas[i]
+        const waveLength = (Math.random() * this.characteristicSize) * lambdas[i]
+        const posX = (Math.random() * (this.size + 40)) - 20
+        const posY = (Math.random() * (this.size + 40)) - 20
 
-      terrainFunctions.push({
-        posX,
-        posY,
-        waveLength,
-        maxAmp
-      })
-    }
-
-    function getVal(x, y) {
-      return terrainFunctions.reduce(function(total, funInfo) {
-        const distance = Math.sqrt(Math.pow(x - funInfo.posX, 2) + Math.pow(y - funInfo.posY, 2))
-        const funVal = funInfo.maxAmp * Math.cos(funInfo.waveLength * distance * Math.PI / 180)
-        return total + funVal
-      }, 0)
-    }
-
-    let terrain = []
-
-    for (let i = 0; i < this.xSize; i++) {
-      terrain.push([])
-      for (let j = 0; j < this.ySize; j++) {
-        terrain[i].push({
-          posX : i - Math.floor(this.xSize / 2),
-          posY : j - Math.floor(this.ySize / 2),
-          height: this.baseHeight + getVal(i, j)
+        terrainFunctions.push({
+          posX,
+          posY,
+          waveLength,
+          maxAmp
         })
       }
-    }
 
-    return terrain
+      function getVal(x, y) {
+        return terrainFunctions.reduce(function(total, funInfo) {
+          const distance = Math.sqrt(Math.pow(x - funInfo.posX, 2) + Math.pow(y - funInfo.posY, 2))
+          const funVal = funInfo.maxAmp * Math.cos(funInfo.waveLength * distance * Math.PI / 180)
+          return total + funVal
+        }, 0)
+      }
+
+      let terrain = []
+
+      for (let i = 0; i < this.size; i++) {
+        terrain.push([])
+        for (let j = 0; j < this.size; j++) {
+          terrain[i].push({
+            posX : i - Math.floor(this.size / 2),
+            posY : j - Math.floor(this.size / 2),
+            height: baseHeight + getVal(i, j)
+          })
+        }
+      }
+
+      resolve(terrain)
+    })
   }
 
   generateFractalDiamondSquareTerrain () {
@@ -138,12 +137,12 @@ export default class TerrainGenerator {
       // Generate array
       let terrain = []
   
-      for (let i = 0; i < this.xSize; i++) {
+      for (let i = 0; i < this.size; i++) {
         terrain.push([])
-        for (let j = 0; j < this.ySize; j++) {
+        for (let j = 0; j < this.size; j++) {
           terrain[i].push({
-            posX : i - Math.floor(this.xSize / 2),
-            posY : j - Math.floor(this.ySize / 2),
+            posX : i - Math.floor(this.size / 2),
+            posY : j - Math.floor(this.size / 2),
             height: null
           })
         }
@@ -154,16 +153,16 @@ export default class TerrainGenerator {
       const randomHeightModifier = 30
 
       terrain[0][0].height = initialHeight + getRandomHeight(randomHeightModifier)
-      terrain[this.xSize - 1][0].height = initialHeight + getRandomHeight(randomHeightModifier)
+      terrain[this.size - 1][0].height = initialHeight + getRandomHeight(randomHeightModifier)
       terrain[0][this.ySize - 1].height = initialHeight + getRandomHeight(randomHeightModifier)
-      terrain[this.xSize - 1][this.ySize - 1].height = initialHeight + getRandomHeight(randomHeightModifier)
+      terrain[this.size - 1][this.ySize - 1].height = initialHeight + getRandomHeight(randomHeightModifier)
 
-      let squareSize = this.xSize - 1
+      let squareSize = this.size - 1
       let heightModifier = randomHeightModifier
 
       while (squareSize > 1) {
         console.log('running a step of size: ' + squareSize)
-        diamondSquareStep(squareSize, this.xSize - 1, heightModifier)
+        diamondSquareStep(squareSize, this.size - 1, heightModifier)
         squareSize = squareSize / 2
         heightModifier = heightModifier / 2
       }
@@ -174,7 +173,7 @@ export default class TerrainGenerator {
 
   generateBaseTerrain () {
     console.log('about to begin terrain generation')
-    //return this.generateTrigTerrain(4)
+    // return this.generateTrigTerrain()
 
     return this.generateFractalDiamondSquareTerrain()
   }
