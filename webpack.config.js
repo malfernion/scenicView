@@ -18,6 +18,9 @@ module.exports = {
       'THREE': 'three'
     })
   ],
+  optimization: {
+    minimize: false
+  },
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
