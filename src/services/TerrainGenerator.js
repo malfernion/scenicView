@@ -190,7 +190,20 @@ export default class TerrainGenerator {
     }
   }
 
+  postProcessHeights (terrain, terrainConfig) {
+    if(terrainConfig.integerHeights) {
+      for (let innerArray of terrain) {
+        for (let terrainObject of innerArray) {
+          terrainObject.height = Math.round(terrainObject.height)
+        }
+      }
+    }
+
+    return terrain
+  }
+
   generate (terrainConfig) {
-    return this.generateBaseTerrain(terrainConfig).then(generatedBaseTerrain => generatedBaseTerrain)
+    return this.generateBaseTerrain(terrainConfig)
+      .then(generatedBaseTerrain => this.postProcessHeights(generatedBaseTerrain, terrainConfig))
   }
 }

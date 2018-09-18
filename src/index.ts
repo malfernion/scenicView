@@ -91,7 +91,10 @@ addLights()
 
 const terrainConfig = {
 	size: size,
-	type: 'fractal'
+	integerHeights: true,
+	// type: 'fractal'
+	type: 'smoothFractal'
+	// type: 'trigonometric'
 }
 
 terrainGenerator.generate(terrainConfig)
