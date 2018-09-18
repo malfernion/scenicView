@@ -4,6 +4,7 @@
   "description": "A three.js small random world generator and viewer",
   "main": "index.html",
   "scripts": {
+    "build": "webpack",
     "start": "http-server . & webpack",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
