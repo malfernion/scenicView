@@ -4,7 +4,7 @@ import TerrainGenerator from './services/TerrainGenerator'
 
 let scene, camera, renderer, controls
 const size = 65
-let terrainGenerator = new TerrainGenerator(size)
+let terrainGenerator = new TerrainGenerator()
 
 // initialise main objects
 function init() {
@@ -37,8 +37,7 @@ function init() {
 }
 
 function addLights() {
-	const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
-	scene.add(ambientLight)
+	scene.add(new THREE.AmbientLight(0xffffff, 0.4))
 	
 	const pointLight = new THREE.PointLight('white', 0.7, 0)
 	pointLight.position.set(150, 150, 700)
@@ -51,9 +50,6 @@ function addLights() {
 	scene.add(pointLight)
 }
 
-init()
-addLights()
-
 // const mudMaterial = new THREE.MeshLambertMaterial({
 // 	map: THREE.ImageUtils.loadTexture('/src/textures/mud_32px.png')
 // })
@@ -64,17 +60,24 @@ addLights()
 
 // const materials = [ mudMaterial, mudMaterial, mudMaterial, mudMaterial, grassMaterial, mudMaterial ]
 
-// create a cube with a shitty material
-var addCube = function(posX, posY, height) {
+// create a cuboid
+function addCube(posX, posY, height) {
 	const geometry = new THREE.CubeGeometry(1, 1, height)
-	const material = new THREE.MeshLambertMaterial({
-        color: 0x0aeedf
-    })
+	const material = new THREE.MeshLambertMaterial({ color: 0x0aeedf })
 	const cubeMesh = new THREE.Mesh(geometry, material)
 	cubeMesh.position.set(posX, posY, 0 + height / 2)
 	cubeMesh.receiveShadow = true
 	cubeMesh.castShadow = true
 	scene.add(cubeMesh);
+}
+
+// Add a plane as stylised water
+function addWaterPlane() {
+	const geometry = new THREE.PlaneGeometry( size, size, 32 );
+	const material = new THREE.MeshBasicMaterial( {color: 0x005F50, side: THREE.DoubleSide} );
+	const plane = new THREE.Mesh( geometry, material );
+	plane.position.set(0, 0, 0)
+	scene.add( plane );
 }
 
 function animate() {
@@ -83,15 +86,17 @@ function animate() {
 	renderer.render(scene, camera)
 }
 
-// Add a plane as stylised water
-const geometry = new THREE.PlaneGeometry( size, size, 32 );
-const material = new THREE.MeshBasicMaterial( {color: 0x005F50, side: THREE.DoubleSide} );
-const plane = new THREE.Mesh( geometry, material );
-plane.position.set(0, 0, 0)
-scene.add( plane );
+init()
+addLights()
 
-terrainGenerator.generate()
+const terrainConfig = {
+	size: size,
+	type: 'fractal'
+}
+
+terrainGenerator.generate(terrainConfig)
 	.then(terrain => {
+		addWaterPlane()
 		for (let innerArray of terrain) {
 			for (let terrainObject of innerArray) {
 				if(terrainObject.height > 0) {
