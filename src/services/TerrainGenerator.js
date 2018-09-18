@@ -61,17 +61,18 @@ export default class TerrainGenerator {
     })
   }
 
-  generateFractalDiamondSquareTerrain (size) {
+  generateFractalDiamondSquareTerrain (size, smoothAfterIteration) {
     return new Promise((resolve, reject) => {
   
       // Method for filling the seeded terrain with values
-      function diamondSquareStep (size, maxVal, heightModifier) {
+      function diamondSquareStep (size, maxVal, heightModifier, addNoise) {
         const halfSize = size / 2
 
         // Loop over all squares for this size and define the centre point
         for (let x = halfSize; x < maxVal; x += size) {
           for (let y = halfSize; y < maxVal; y += size) {
-            evaluateSquare(x, y, size, getRandomHeight(heightModifier))
+            const heightDelta = addNoise ? getRandomHeight(heightModifier) : 0
+            evaluateSquare(x, y, size, heightDelta)
           }
         }
 
@@ -79,16 +80,20 @@ export default class TerrainGenerator {
         for (let x = 0; x < maxVal; x += size) {
           for (let y = 0; y < maxVal; y += size) {
             if(heightExists(x + halfSize, y)) {
-              evaluateDiamond(x + halfSize, y, size, getRandomHeight(heightModifier))
+              const heightDelta = addNoise ? getRandomHeight(heightModifier) : 0
+              evaluateDiamond(x + halfSize, y, size, heightDelta)
             }
             if(heightExists(x + halfSize, y + size)) {
-              evaluateDiamond(x + halfSize, y + size, size, getRandomHeight(heightModifier))
+              const heightDelta = addNoise ? getRandomHeight(heightModifier) : 0
+              evaluateDiamond(x + halfSize, y + size, size, heightDelta)
             }
             if(heightExists(x, y + halfSize)) {
-              evaluateDiamond(x, y + halfSize, size, getRandomHeight(heightModifier))
+              const heightDelta = addNoise ? getRandomHeight(heightModifier) : 0
+              evaluateDiamond(x, y + halfSize, size, heightDelta)
             }
             if(heightExists(x + size, y + halfSize)) {
-              evaluateDiamond(x + size, y + halfSize, size, getRandomHeight(heightModifier))
+              const heightDelta = addNoise ? getRandomHeight(heightModifier) : 0
+              evaluateDiamond(x + size, y + halfSize, size, heightDelta)
             }
           }
         }
@@ -137,14 +142,14 @@ export default class TerrainGenerator {
         return terrain[x] && terrain[x][y]
       }
 
-      function getRandomHeight(randomHeightModifer) {
-        return (Math.random() * randomHeightModifer) - (randomHeightModifer / 2)
+      function getRandomHeight(modifier) {
+        return (Math.random() * modifier) - (modifier / 2)
       }
   
       let terrain = this.generateTerrainArray(size)
   
       // Seed corner values with a randomly modified height
-      const initialHeight = 10
+      const initialHeight = 5
       const randomHeightModifier = 30
 
       terrain[0][0].height = initialHeight + getRandomHeight(randomHeightModifier)
@@ -155,12 +160,19 @@ export default class TerrainGenerator {
       // Run the algorithm
       let squareSize = size - 1
       let heightModifier = randomHeightModifier
+      let iteration = 0
+      let addNoise = true
 
       while (squareSize > 1) {
-        console.log('running a step of size: ' + squareSize)
-        diamondSquareStep(squareSize, size - 1, heightModifier)
+        console.log('running iteration: ' + iteration + ', a step of size: ' + squareSize)
+        if(smoothAfterIteration && addNoise && iteration > smoothAfterIteration) {
+          console.log('ceasing adding random noise after iteration: ' + smoothAfterIteration)
+          addNoise = false
+        }
+        diamondSquareStep(squareSize, size - 1, heightModifier, addNoise)
         squareSize = squareSize / 2
         heightModifier = heightModifier / 2
+        iteration++
       }
       
       resolve(terrain)
@@ -172,7 +184,7 @@ export default class TerrainGenerator {
       case 'fractal':
         return this.generateFractalDiamondSquareTerrain(terrainConfig.size)
       case 'smoothFractal':
-        // TODO returns fractal terrain where only some points have random noise fractal and the rest is linear interpolation
+        return this.generateFractalDiamondSquareTerrain(terrainConfig.size, 3)
       case 'trigonometric':
         return this.generateTrigTerrain(terrainConfig.size)
     }
